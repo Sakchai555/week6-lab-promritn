@@ -94,3 +94,25 @@ func (s *Store) AddReview(
 
 	return r, nil
 }
+
+
+func (s *Store) DeleteReview(
+	ctx context.Context,
+	reviewID, memberID int64,
+	isAdmin bool,
+) error {
+	tag, err := s.Pool.Exec(ctx,
+		`DELETE FROM reviews
+		 WHERE id = $1 AND (member_id = $2 OR $3)`,
+		reviewID, memberID, isAdmin,
+	)
+	if err != nil {
+		return err
+	}
+
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+
+	return nil
+}
