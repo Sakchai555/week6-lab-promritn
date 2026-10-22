@@ -35,10 +35,28 @@ func main() {
 	h := &handler.Handler{Store: &store.Store{Pool: pool}, Tickets: tickets}
 
 	mux := http.NewServeMux()
+
 	mux.HandleFunc("POST /api/auth/register", h.Register)
 	mux.HandleFunc("POST /api/auth/login", h.Login)
+
+	mux.HandleFunc("GET /api/me",
+		mw.RequireLogin(tickets, h.Me),
+	)
+
 	mux.HandleFunc("GET /api/movies", h.SearchMovies)
 	mux.HandleFunc("GET /api/movies/{id}/reviews", h.ListReviews)
+
+	mux.HandleFunc("GET /api/admin/members",
+		mw.RequireLogin(tickets,
+			mw.RequireRole("admin", h.AdminMembers),
+		),
+	)
+
+	mux.HandleFunc("GET /api/admin/stats",
+		mw.RequireLogin(tickets,
+			mw.RequireRole("admin", h.AdminStats),
+		),
+	)
 
 	origins := []string{
 		"http://localhost:3000",
