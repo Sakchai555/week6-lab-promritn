@@ -20,11 +20,13 @@ func main() {
 	if len(secret) < 32 {
 		log.Fatal("JWT_SECRET ต้องยาวอย่างน้อย 32 ตัวอักษร")
 	}
+
 	pool, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer pool.Close()
+
 	if err := pool.Ping(context.Background()); err != nil {
 		log.Fatal("ต่อฐานข้อมูลไม่ติด ", err)
 	}
@@ -38,6 +40,14 @@ func main() {
 	mux.HandleFunc("GET /api/movies", h.SearchMovies)
 	mux.HandleFunc("GET /api/movies/{id}/reviews", h.ListReviews)
 
+	origins := []string{
+		"http://localhost:3000",
+		"https://moviehub-670710337-wrhu.vercel.app",
+	}
+
 	log.Println("MovieHub API ฟังอยู่ที่ :8080")
-	log.Fatal(http.ListenAndServe(":8080", mw.Logging(mux)))
+	log.Fatal(http.ListenAndServe(
+		":8080",
+		mw.Logging(mw.CORS(origins, mux)),
+	))
 }
